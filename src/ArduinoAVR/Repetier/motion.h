@@ -458,6 +458,10 @@ public:
         HAL::allowInterrupts();
         Printer::advanceExecuted = advanceTarget;
 #else
+		// unused parameters
+		(void)max_loops;
+		(void)accelerate;
+
         int tred = HAL::mulu6xu16shift16(v,advanceL);
         HAL::forbidInterrupts();
         Printer::extruderStepsNeeded += tred - Printer::advanceStepsSet;
