@@ -463,10 +463,11 @@ void GCode::readFromSerial()
 */
 bool GCode::parseBinary(uint8_t *buffer,bool fromSerial)
 {
+	(void)fromSerial;
+
     unsigned int sum1=0,sum2=0; // for fletcher-16 checksum
     // first do fletcher-16 checksum tests see
     // http://en.wikipedia.org/wiki/Fletcher's_checksum
-    uint8_t i=0;
     uint8_t *p = buffer;
     uint8_t len = binaryCommandSize-2;
     while (len)
@@ -603,7 +604,6 @@ bool GCode::parseBinary(uint8_t *buffer,bool fromSerial)
 */
 bool GCode::parseAscii(char *line,bool fromSerial)
 {
-    bool has_checksum = false;
     char *pos;
     params = 0;
     params2 = 0;
@@ -731,6 +731,8 @@ bool GCode::parseAscii(char *line,bool fromSerial)
         }
         return false;
     }
+#else
+	(void)fromSerial;
 #endif
     if(hasFormatError() || (params & 518)==0)   // Must contain G, M or T command and parameter need to have variables!
     {
