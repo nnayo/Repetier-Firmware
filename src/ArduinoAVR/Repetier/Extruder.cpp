@@ -145,7 +145,7 @@ void Extruder::manageTemperatures()
             {
                 float raising = 3.333 * (act->currentTemperatureC - act->tempArray[act->tempPointer]); // raising dT/dt, 3.33 = reciproke of time interval (300 ms)
                 act->tempIState = 0.25 * (3.0 * act->tempIState + raising); // damp raising
-                output = (act->currentTemperatureC + act->tempIState * act->pidPGain > act->targetTemperatureC ? 0 : output = act->pidDriveMax);
+                output = (act->currentTemperatureC + act->tempIState * act->pidPGain > act->targetTemperatureC ? 0 : act->pidDriveMax);
             }
             pwm_pos[act->pwmIndex] = output;
         }
@@ -281,7 +281,7 @@ void Extruder::initExtruder()
     for(i=0; i<NUM_EXTRUDER; ++i)
     {
         Extruder *act = &extruder[i];
-        if(act->enablePin > -1)
+        if(act->enablePin != (uint8_t)-1)
         {
             HAL::pinMode(act->enablePin,OUTPUT);
             if(!act->enableOn) HAL::digitalWrite(act->enablePin,HIGH);
@@ -439,7 +439,7 @@ float Extruder::getHeatedBedTemperature()
 
 void Extruder::disableCurrentExtruderMotor()
 {
-    if(Extruder::current->enablePin > -1)
+    if(Extruder::current->enablePin != (uint8_t)-1)
         digitalWrite(Extruder::current->enablePin,!Extruder::current->enableOn);
 #if FEATURE_DITTO_PRINTING
     if(Extruder::dittoMode)
@@ -625,7 +625,7 @@ void TemperatureController::updateCurrentTemperature()
         const short *temptable = (const short *)pgm_read_word(&temptables[type]); //pgm_read_word_near(&temptables[type]);
         short oldraw = pgm_read_word(&temptable[0]);
         short oldtemp = pgm_read_word(&temptable[1]);
-        short newraw,newtemp;
+        short newraw = 0, newtemp = 0;
         currentTemperature = (1023<<(2-ANALOG_REDUCE_BITS))-currentTemperature;
         while(i<num)
         {
@@ -655,7 +655,7 @@ void TemperatureController::updateCurrentTemperature()
         const short *temptable = (const short *)pgm_read_word(&temptables[type]); //pgm_read_word_near(&temptables[type]);
         short oldraw = pgm_read_word(&temptable[0]);
         short oldtemp = pgm_read_word(&temptable[1]);
-        short newraw,newtemp;
+        short newraw = 0, newtemp = 0;
         while(i<num)
         {
             newraw = pgm_read_word(&temptable[i++]);
@@ -759,7 +759,7 @@ void TemperatureController::setTargetTemperature(float target)
         const short *temptable = (const short *)pgm_read_word(&temptables[type]); //pgm_read_word(&temptables[type]);
         short oldraw = pgm_read_word(&temptable[0]);
         short oldtemp = pgm_read_word(&temptable[1]);
-        short newraw,newtemp;
+        short newraw = 0, newtemp = 0;
         while(i<num)
         {
             newraw = pgm_read_word(&temptable[i++]);
@@ -786,7 +786,7 @@ void TemperatureController::setTargetTemperature(float target)
         const short *temptable = (const short *)pgm_read_word(&temptables[type]); //pgm_read_word(&temptables[type]);
         short oldraw = pgm_read_word(&temptable[0]);
         short oldtemp = pgm_read_word(&temptable[1]);
-        short newraw,newtemp;
+        short newraw = 0, newtemp = 0;
         while(i<num)
         {
             newraw = pgm_read_word(&temptable[i++]);
@@ -884,13 +884,13 @@ void TemperatureController::autotunePID(float temp,uint8_t controllerId,bool sto
     unsigned long temp_millis = HAL::timeInMilliseconds();
     unsigned long t1=temp_millis;
     unsigned long t2=temp_millis;
-    long t_high;
+    long t_high = 0;
     long t_low;
 
     long bias=pidMax>>1;
     long d = pidMax>>1;
     float Ku, Tu;
-    float Kp, Ki, Kd;
+    float Kp = 0.0, Ki = 0.0, Kd = 0.0;
     float maxTemp=20, minTemp=20;
 
     Com::printInfoFLN(Com::tPIDAutotuneStart);
