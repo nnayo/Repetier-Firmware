@@ -48,6 +48,7 @@ void EEPROM::update(GCode *com)
     readDataFromEEPROM();
     Extruder::selectExtruderById(Extruder::current->id);
 #else
+	(void)com;
     Com::printErrorF(Com::tNoEEPROMSupport);
 #endif
 }
@@ -421,6 +422,8 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
     // Save version and build checksum
     HAL::eprSetByte(EPR_VERSION,EEPROM_PROTOCOL_VERSION);
     HAL::eprSetByte(EPR_INTEGRITY_BYTE,computeChecksum());
+#else
+	(void)corrupted;
 #endif
 }
 void EEPROM::initalizeUncached()
