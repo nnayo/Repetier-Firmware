@@ -256,7 +256,7 @@ UI_MENU_ACTIONSELECTOR(ui_menu_go_zfast,UI_TEXT_Z_POS_FAST,ui_menu_zpos_fast);
 #define UI_SPEED_Z ,&ui_menu_go_zpos
 #endif
 
-#if DRIVE_SYSTEM!=3     //Positioning menu for non-delta
+#if DRIVE_SYSTEM != 3     //Positioning menu for non-delta
 #define UI_MENU_POSITIONS {UI_MENU_ADDCONDBACK &ui_menu_home_all,&ui_menu_home_x,&ui_menu_home_y,&ui_menu_home_z UI_SPEED_X UI_SPEED_Y UI_SPEED_Z ,&ui_menu_go_epos}
 UI_MENU(ui_menu_positions,UI_MENU_POSITIONS,5+3*UI_SPEED+UI_MENU_BACKCNT);
 #else                   //Positioning menu for delta (removes individual x,y,z homing)
@@ -265,7 +265,7 @@ UI_MENU(ui_menu_positions,UI_MENU_POSITIONS,2+3*UI_SPEED+UI_MENU_BACKCNT);
 #endif
 
 // **** Delta calibration menu
-#ifdef Z_HOME_DIR < 0
+#if Z_HOME_DIR < 0
 UI_MENU_ACTIONCOMMAND(ui_menu_set_measured_origin,UI_TEXT_SET_MEASURED_ORIGIN,UI_ACTION_SET_MEASURED_ORIGIN);
 #define UI_MENU_DELTA {UI_MENU_ADDCONDBACK &ui_menu_home_all UI_SPEED_Z,&ui_menu_set_measured_origin}
 UI_MENU(ui_menu_delta,UI_MENU_DELTA,2+UI_SPEED+UI_MENU_BACKCNT);
@@ -277,7 +277,7 @@ UI_MENU_ACTIONCOMMAND(ui_menu_set_p1,UI_TEXT_SET_P1,UI_ACTION_SET_P1);
 UI_MENU_ACTIONCOMMAND(ui_menu_set_p2,UI_TEXT_SET_P2,UI_ACTION_SET_P2);
 UI_MENU_ACTIONCOMMAND(ui_menu_set_p3,UI_TEXT_SET_P3,UI_ACTION_SET_P3);
 UI_MENU_ACTIONCOMMAND(ui_menu_calculate_leveling,UI_TEXT_CALCULATE_LEVELING,UI_ACTION_CALC_LEVEL);
-#define UI_MENU_LEVEL {UI_MENU_ADDCONDBACK &ui_menu_set_p1,&ui_menu_set_p2,&ui_menu_set_p3,&ui_menu_calculate_leveling UI_SPEED_X UI_SPEED_Y UI_SPEED_z}
+#define UI_MENU_LEVEL {UI_MENU_ADDCONDBACK &ui_menu_set_p1,&ui_menu_set_p2,&ui_menu_set_p3,&ui_menu_calculate_leveling UI_SPEED_X UI_SPEED_Y UI_SPEED_Z}
 UI_MENU(ui_menu_level,UI_MENU_LEVEL,4+3*UI_SPEED+UI_MENU_BACKCNT);
 #endif
 
@@ -461,10 +461,14 @@ UI_MENU_CHANGEACTION(ui_menu_ext_wait_units,UI_TEXT_EXTR_WAIT_RETRACT_UNITS,UI_A
 #define UI_MENU_ADV_CNT 0
 #define UI_MENU_ADVANCE
 #ifdef USE_ADVANCE
+#undef UI_MENU_ADV_CNT
 #define UI_MENU_ADV_CNT 1
+#undef UI_MENU_ADVANCE
 #define UI_MENU_ADVANCE ,&ui_menu_cext_advancel
 #ifdef ENABLE_QUADRATIC_ADVANCE
+#undef UI_MENU_ADV_CNT
 #define UI_MENU_ADV_CNT 2
+#undef UI_MENU_ADVANCE
 #define UI_MENU_ADVANCE ,&ui_menu_cext_advancel,&ui_menu_cext_advancek
 UI_MENU_CHANGEACTION(ui_menu_cext_advancek,UI_TEXT_EXTR_ADVANCE_K,UI_ACTION_ADVANCE_K);
 #endif
@@ -520,7 +524,7 @@ UI_MENU_SUBMENU(ui_menu_conf_level, UI_TEXT_LEVEL, ui_menu_level);
 #define UI_MENU_SL_COND
 #define UI_MENU_SL_CNT 0
 #endif
-#ifdef Z_HOME_DIR<0
+#if Z_HOME_DIR < 0
 #define UI_MENU_DELTA_COND ,&ui_menu_conf_delta
 #define UI_MENU_DELTA_CNT 1
 UI_MENU_SUBMENU(ui_menu_conf_delta, UI_TEXT_ZCALIB, ui_menu_delta);
