@@ -344,7 +344,7 @@ void PrintLine::calculateMove(float axis_diff[],uint8_t pathOptimize)
     {
         float advlin = fabs(speedE)*Extruder::current->advanceL*0.001*Printer::axisStepsPerMM[E_AXIS];
         advanceL = (uint16_t)((65536*advlin)/vMax); //advanceLscaled = (65536*vE*k2)/vMax
-#ifdef ENABLE_QUADRATIC_ADVANCE;
+#ifdef ENABLE_QUADRATIC_ADVANCE
         advanceFull = 65536*Extruder::current->advanceK * speedE * speedE; // Steps*65536 at full speed
         long steps = (HAL::U16SquaredToU32(vMax))/(accelerationPrim<<1); // v^2/(2*a) = steps needed to accelerate from 0-vMax
         advanceRate = advanceFull/steps;
@@ -431,7 +431,7 @@ void PrintLine::updateTrapezoids()
     // Now ignore enough segments to gain enough time for path planning
     long timeleft = 0;
     // Skip as many stored moves as needed to gain enough time for computation
-    while(timeleft<4500*MOVE_CACHE_SIZE && maxfirst!=linesWritePos)
+    while(timeleft<4500L*MOVE_CACHE_SIZE && maxfirst!=linesWritePos)
     {
         timeleft += lines[maxfirst].timeInTicks;
         nextPlannerIndex(maxfirst);
@@ -1138,7 +1138,7 @@ uint8_t PrintLine::calculateDistance(float axisDiff[], uint8_t dir, float *dista
     }
 }
 
-#ifdef SOFTWARE_LEVELING && DRIVE_SYSTEM==3
+#if defined(SOFTWARE_LEVELING) && DRIVE_SYSTEM == 3
 void PrintLine::calculatePlane(long factors[], long p1[], long p2[], long p3[])
 {
     factors[0] = p1[1] * (p2[2] - p3[2]) + p2[1] * (p3[2] - p1[2]) + p3[1] * (p1[2] - p2[2]);
@@ -1161,7 +1161,7 @@ inline void PrintLine::queueEMove(long e_diff,uint8_t check_endstops,uint8_t pat
         GCode::readFromSerial();
         Commands::checkForPeriodicalActions();
     }
-    uint8_t newPath=insertWaitMovesIfNeeded(pathOptimize, 0);
+    insertWaitMovesIfNeeded(pathOptimize, 0);
     PrintLine *p = getNextWriteLine();
     float axis_diff[4]; // Axis movement in mm
     if(check_endstops) p->checkEndstops();
@@ -1293,7 +1293,7 @@ void PrintLine::queueDeltaMove(uint8_t check_endstops,uint8_t pathOptimize, uint
 
     // Insert dummy moves if necessary
     // Nead to leave at least one slot open for the first split move
-    uint8_t newPath=insertWaitMovesIfNeeded(pathOptimize, RMath::min(MOVE_CACHE_SIZE-4,num_lines-1));
+    insertWaitMovesIfNeeded(pathOptimize, RMath::min(MOVE_CACHE_SIZE-4,num_lines-1));
 
     for (int line_number=1; line_number < num_lines + 1; line_number++)
     {
@@ -1385,16 +1385,11 @@ void PrintLine::arc(float *position, float *target, float *offset, float radius,
     //   plan_set_acceleration_manager_enabled(false); // disable acceleration management for the duration of the arc
     float center_axis0 = position[0] + offset[0];
     float center_axis1 = position[1] + offset[1];
-    float linear_travel = 0; //target[axis_linear] - position[axis_linear];
     float extruder_travel = (Printer::destinationSteps[E_AXIS]-Printer::currentPositionSteps[E_AXIS])*Printer::invAxisStepsPerMM[E_AXIS];
     float r_axis0 = -offset[0];  // Radius vector from center to current location
     float r_axis1 = -offset[1];
     float rt_axis0 = target[0] - center_axis0;
     float rt_axis1 = target[1] - center_axis1;
-    long xtarget = Printer::destinationSteps[X_AXIS];
-    long ytarget = Printer::destinationSteps[Y_AXIS];
-    long ztarget = Printer::destinationSteps[Z_AXIS];
-    long etarget = Printer::destinationSteps[E_AXIS];
 
     // CCW angle between position and target from circle center. Only one atan2() trig computation required.
     float angular_travel = atan2(r_axis0*rt_axis1-r_axis1*rt_axis0, r_axis0*rt_axis0+r_axis1*rt_axis1);
@@ -1407,7 +1402,7 @@ void PrintLine::arc(float *position, float *target, float *offset, float radius,
         angular_travel -= 2*M_PI;
     }
 
-    float millimeters_of_travel = fabs(angular_travel)*radius; //hypot(angular_travel*radius, fabs(linear_travel));
+    float millimeters_of_travel = fabs(angular_travel)*radius;
     if (millimeters_of_travel < 0.001)
     {
         return;
@@ -1423,7 +1418,6 @@ void PrintLine::arc(float *position, float *target, float *offset, float radius,
       if (invert_feed_rate) { feed_rate *= segments; }
     */
     float theta_per_segment = angular_travel/segments;
-    float linear_per_segment = linear_travel/segments;
     float extruder_per_segment = extruder_travel/segments;
 
     /* Vector rotation by transformation matrix: r is the original vector, r_T is the rotated vector,
@@ -1501,7 +1495,6 @@ void PrintLine::arc(float *position, float *target, float *offset, float radius,
         // Update arc_target location
         arc_target[0] = center_axis0 + r_axis0;
         arc_target[1] = center_axis1 + r_axis1;
-        //arc_target[axis_linear] += linear_per_segment;
         arc_target[3] += extruder_per_segment;
         Printer::moveToReal(arc_target[0],arc_target[1],IGNORE_COORDINATE,arc_target[3],IGNORE_COORDINATE);
     }
