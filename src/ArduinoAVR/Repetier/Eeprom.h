@@ -284,6 +284,8 @@ public:
         uint8_t newcheck = computeChecksum();
         if(newcheck!=HAL::eprGetByte(EPR_INTEGRITY_BYTE))
             HAL::eprSetByte(EPR_INTEGRITY_BYTE,newcheck);
+#else
+		(void)steps;
 #endif
     }
     static inline void setDeltaTowerYOffsetSteps(int16_t steps) {
@@ -292,6 +294,8 @@ public:
         uint8_t newcheck = computeChecksum();
         if(newcheck!=HAL::eprGetByte(EPR_INTEGRITY_BYTE))
             HAL::eprSetByte(EPR_INTEGRITY_BYTE,newcheck);
+#else
+		(void)steps;
 #endif
     }
     static inline void setDeltaTowerZOffsetSteps(int16_t steps) {
@@ -300,6 +304,8 @@ public:
         uint8_t newcheck = computeChecksum();
         if(newcheck!=HAL::eprGetByte(EPR_INTEGRITY_BYTE))
             HAL::eprSetByte(EPR_INTEGRITY_BYTE,newcheck);
+#else
+		(void)steps;
 #endif
     }
     static inline float deltaAlphaA() {
