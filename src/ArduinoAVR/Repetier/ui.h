@@ -661,6 +661,7 @@ void ui_check_slow_keys(int &action) {
 #define UI_HAS_KEYS 1
 #define UI_HAS_BACK_KEY 0
 #define UI_DISPLAY_TYPE 1
+#undef UI_DISPLAY_CHARSET	// overwrite configuration
 #define UI_DISPLAY_CHARSET 0
 #define UI_COLS 20
 #define UI_ROWS 2

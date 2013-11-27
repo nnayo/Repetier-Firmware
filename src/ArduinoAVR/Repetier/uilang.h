@@ -16,6 +16,9 @@
 
 */
 
+#ifndef UI_LANG_H
+#define UI_LANG_H
+
 #if !defined(UI_DISPLAY_CHARSET) || UI_DISPLAY_CHARSET>2
 #define UI_DISPLAY_CHARSET 1
 #endif
@@ -1331,3 +1334,5 @@
 #define UI_TEXT_STRING_HM_SLOWBANG     "SlowBang"
 
 #endif
+
+#endif	// UI_LANG_H
