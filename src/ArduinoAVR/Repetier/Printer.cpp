@@ -833,7 +833,6 @@ void Printer::homeZAxis() // Delta z homing
 
 void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // Delta homing code
 {
-    long steps;
     bool homeallaxis = (xaxis && yaxis && zaxis) || (!xaxis && !yaxis && !zaxis);
     if (X_MAX_PIN > -1 && Y_MAX_PIN > -1 && Z_MAX_PIN > -1 && MAX_HARDWARE_ENDSTOP_X & MAX_HARDWARE_ENDSTOP_Y && MAX_HARDWARE_ENDSTOP_Z)
     {
@@ -1111,8 +1110,6 @@ float Printer::runZProbe(bool first,bool last)
     Commands::waitUntilEndOfAllMoves();
     long probeDepth = 2*(Printer::zMaxSteps-Printer::zMinSteps);
     stepsRemainingAtZHit = -1;
-    long offx = axisStepsPerMM[0]*EEPROM::zProbeXOffset();
-    long offy = axisStepsPerMM[1]*EEPROM::zProbeYOffset();
     //PrintLine::moveRelativeDistanceInSteps(-offx,-offy,0,0,EEPROM::zProbeXYSpeed(),true,true);
     waitForZProbeStart();
     setZProbingActive(true);
