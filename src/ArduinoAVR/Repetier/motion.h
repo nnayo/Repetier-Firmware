@@ -285,7 +285,7 @@ public:
     {
         return flags & FLAG_NOMINAL;
     }
-    inline bool setNominalMove()
+    inline void setNominalMove()
     {
         flags |= FLAG_NOMINAL;
     }
@@ -491,7 +491,7 @@ public:
     {
         return halfStep == 4;
     }
-    inline bool startXStep()
+    inline void startXStep()
     {
         ANALYZER_ON(ANALYZER_CH6);
 #if DRIVE_SYSTEM==0 || !defined(XY_GANTRY)
@@ -529,9 +529,8 @@ public:
 #ifdef DEBUG_STEPCOUNT
         totalStepsRemaining--;
 #endif
-
     }
-    inline bool startYStep()
+    inline void startYStep()
     {
         ANALYZER_ON(ANALYZER_CH7);
 #if DRIVE_SYSTEM==0 || !defined(XY_GANTRY)
@@ -650,7 +649,7 @@ public:
     inline uint16_t calculateDeltaSubSegments(uint8_t softEndstop);
     static inline void calculateDirectionAndDelta(long difference[], uint8_t *dir, long delta[]);
     static inline uint8_t calculateDistance(float axis_diff[], uint8_t dir, float *distance);
-#ifdef SOFTWARE_LEVELING && DRIVE_SYSTEM==3
+#if defined(SOFTWARE_LEVELING) && (DRIVE_SYSTEM == 3)
     static void calculatePlane(long factors[], long p1[], long p2[], long p3[]);
     static float calcZOffset(long factors[], long pointX, long pointY);
 #endif
