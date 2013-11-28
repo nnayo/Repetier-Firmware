@@ -46,7 +46,7 @@ const int8_t encoder_table[16] PROGMEM = {0,0,0,0,0,0,0,0,0,0,0,-1,0,0,1,0}; // 
 #endif
 
 #if UI_AUTORETURN_TO_MENU_AFTER!=0
-long ui_autoreturn_time=0;
+unsigned long ui_autoreturn_time=0;
 #endif
 
 void beep(uint8_t duration,uint8_t count)
@@ -109,6 +109,9 @@ void beep(uint8_t duration,uint8_t count)
 #if BEEPER_TYPE==2
     HAL::i2cStop();
 #endif
+#else
+	(void)duration;
+	(void)count;
 #endif
 #endif
 }
@@ -117,10 +120,10 @@ bool UIMenuEntry::showEntry() const
 {
     bool ret = true;
     uint8_t f,f2;
-    f = HAL::readFlashByte((const prog_char*)&filter);
+    f = HAL::readFlashByte((PGM_P)&filter);
     if(f!=0)
         ret = (f & Printer::menuMode) != 0;
-    f2 = HAL::readFlashByte((const prog_char*)&nofilter);
+    f2 = HAL::readFlashByte((PGM_P)&nofilter);
     if(ret && f2!=0)
     {
         ret = (f2 & Printer::menuMode) == 0;
@@ -603,7 +606,7 @@ void UIDisplay::initialize()
 #endif
 }
 #if UI_DISPLAY_TYPE==1 || UI_DISPLAY_TYPE==2 || UI_DISPLAY_TYPE==3
-void UIDisplay::createChar(uint8_t location,const uint8_t PROGMEM charmap[])
+void UIDisplay::createChar(uint8_t location, const uint8_t charmap[])
 {
     location &= 0x7; // we only have 8 locations 0-7
     lcdCommand(LCD_SETCGRAMADDR | (location << 3));
@@ -924,7 +927,7 @@ void UIDisplay::parse(char *txt,bool ram)
                 printCols[col++]='%';
             break;
         case 'x':
-            if(c2>='0' && c2<='3')
+            if(c2>='0' && c2<='3') {
                 if(c2=='0')
                     fvalue = Printer::realXPosition();
                 else if(c2=='1')
@@ -933,6 +936,7 @@ void UIDisplay::parse(char *txt,bool ram)
                     fvalue = Printer::realZPosition();
                 else
                     fvalue = (float)Printer::currentPositionSteps[3]*Printer::invAxisStepsPerMM[3];
+			}
             addFloat(fvalue,3,2);
             break;
         case 'y':
@@ -1322,6 +1326,8 @@ void UIDisplay::refreshPage()
     {
         sdrefresh(r);
     }
+#else
+	(void)mtype;
 #endif
     printCols[0]=0;
     while(r<UI_ROWS)
@@ -1462,7 +1468,7 @@ void UIDisplay::okAction()
     executeAction(UI_ACTION_BACK);
 #endif
 }
-#define INCREMENT_MIN_MAX(a,steps,_min,_max) a+=increment*steps;if(a<(_min)) a=_min;else if(a>(_max)) a=_max;
+#define INCREMENT_MIN_MAX(a,steps,_min,_max) a+=increment*steps;if(a<=(_min)) a=_min;else if(a>=(_max)) a=_max;
 void UIDisplay::nextPreviousAction(int8_t next)
 {
     millis_t actTime = HAL::timeInMilliseconds();
@@ -1495,11 +1501,10 @@ void UIDisplay::nextPreviousAction(int8_t next)
     }
     UIMenu *men = (UIMenu*)menu[menuLevel];
     uint8_t nr = pgm_read_word_near(&(men->numEntries));
-    uint8_t mtype = HAL::readFlashByte((const prog_char*)&(men->menuType));
+    uint8_t mtype = HAL::readFlashByte((PGM_P)&(men->menuType));
     UIMenuEntry **entries = (UIMenuEntry**)pgm_read_word(&(men->entries));
     UIMenuEntry *ent =(UIMenuEntry *)pgm_read_word(&(entries[menuPos[menuLevel]]));
     UIMenuEntry *testEnt;
-    uint8_t entType = HAL::readFlashByte((const prog_char*)&(ent->menuType));// 0 = Info, 1 = Headline, 2 = submenu ref, 3 = direct action command
     int action = pgm_read_word(&(ent->action));
     if(mtype==2 && activeAction==0)   // browse through menu items
     {
@@ -1830,6 +1835,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 
 void UIDisplay::finishAction(int action)
 {
+	(void)action;
 }
 // Actions are events from user input. Depending on the current state, each
 // action can behave differently. Other actions do always the same like home, disable extruder etc.
@@ -2349,7 +2355,7 @@ void UIDisplay::slowAction()
 #endif
         int nextAction = 0;
         ui_check_slow_keys(nextAction);
-        if(lastButtonAction!=nextAction)
+        if(lastButtonAction!=(uint16_t)nextAction)
         {
             lastButtonStart = time;
             lastButtonAction = nextAction;
@@ -2455,7 +2461,7 @@ void UIDisplay::fastAction()
         HAL::allowInterrupts();
         int nextAction = 0;
         ui_check_keys(nextAction);
-        if(lastButtonAction!=nextAction)
+        if(lastButtonAction!=(uint16_t)nextAction)
         {
             lastButtonStart = HAL::timeInMilliseconds();
             lastButtonAction = nextAction;
