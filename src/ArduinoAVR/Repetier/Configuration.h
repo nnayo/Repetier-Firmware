@@ -46,7 +46,7 @@ To override EEPROM settings with config settings, set EEPROM_MODE 0
 // BASIC SETTINGS: select your board type, thermistor type, axis scaling, and endstop configuration
 
 /** Number of extruders. Maximum 6 extruders. */
-#define NUM_EXTRUDER 2
+#define NUM_EXTRUDER 1
 
 //// The following define selects which electronics board you have. Please choose the one that matches your setup
 // Gen3 PLUS for RepRap Motherboard V1.2 = 21
@@ -72,7 +72,7 @@ To override EEPROM settings with config settings, set EEPROM_MODE 0
 // PiBot for Repetier V1.4    = 315
 // Sanguish Beta              = 501
 
-#define MOTHERBOARD 33
+#define MOTHERBOARD 701
 
 #include "pins.h"
 
@@ -110,7 +110,7 @@ If a motor turns in the wrong direction change INVERT_X_DIR or INVERT_Y_DIR.
     // ***************************************************
 
     /** \brief Delta drive type: 0 - belts and pulleys, 1 - filament drive */
-    #define DELTA_DRIVE_TYPE 0
+    #define DELTA_DRIVE_TYPE 1
 
     #if DELTA_DRIVE_TYPE == 0
       /** \brief Pitch in mm of drive belt. GT2 = 2mm */
@@ -520,7 +520,7 @@ Value is used for all generic tables created. */
 // ############# Heated bed configuration ########################
 
 /** \brief Set true if you have a heated bed conected to your board, false if not */
-#define HAVE_HEATED_BED true
+#define HAVE_HEATED_BED false
 
 #define HEATED_BED_MAX_TEMP 120
 /** Skip M190 wait, if heated bed is already within x degrees. Fixed numbers only, 0 = off. */
@@ -775,7 +775,7 @@ on this endstop.
 /** When true the delta will home to z max when reset/powered over cord. That way you start with well defined coordinates.
 If you don't do it, make sure to home first before your first move.
 */
-#define DELTA_HOME_ON_POWER false
+#define DELTA_HOME_ON_POWER true
 
 /** To allow software correction of misaligned endstops, you can set the correction in steps here. If you have EEPROM enabled
 you can also change the values online and autoleveling will store the results here. */
@@ -786,7 +786,7 @@ you can also change the values online and autoleveling will store the results he
 
 /** \brief Experimental calibration utility for delta printers
 */
-//#define SOFTWARE_LEVELING
+#define SOFTWARE_LEVELING
 
 #endif
 #if DRIVE_SYSTEM == 4 // ========== Tuga special settings =============
@@ -960,7 +960,7 @@ For more informations, read the wiki.
 
 Uncomment to allow a quadratic advance dependency. Linear is the dominant value, so no real need
 to activate the quadratic term. Only adds lots of computations and storage usage. */
-#define ENABLE_QUADRATIC_ADVANCE
+//#define ENABLE_QUADRATIC_ADVANCE
 
 
 // ##########################################################################################
@@ -1035,7 +1035,7 @@ matches, the stored values are used to overwrite the settings.
 IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, as they are
            taken from the EEPROM.
 */
-#define EEPROM_MODE 1
+#define EEPROM_MODE 0
 
 
 /**************** duplicate motor driver ***************
@@ -1164,7 +1164,7 @@ The following settings override uiconfig.h!
 9 = PiBot Display/Controller extension with 16x2 character display
 10 = Gadgets3D shield on RAMPS 1.4, see http://reprap.org/wiki/RAMPS_1.3/1.4_GADGETS3D_Shield_with_Panel
 */
-#define FEATURE_CONTROLLER 2
+#define FEATURE_CONTROLLER 6
 
 /**
 Select the language to use.
@@ -1176,10 +1176,10 @@ Select the language to use.
 5 = Spanish
 6 = Swedish
 */
-#define UI_LANGUAGE 1
+#define UI_LANGUAGE 0
 
 // This is line 2 of the status display at startup. Change to your like.
-#define UI_VERSION_STRING2 "Delta Tower"
+#define UI_VERSION_STRING2 "Delta TRoll"
 
 /** How many ms should a single page be shown, until it is switched to the next one.*/
 #define UI_PAGES_DURATION 4000
