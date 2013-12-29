@@ -51,6 +51,7 @@ float Printer::currentPosition[3];
 long Printer::destinationSteps[4];
 float Printer::coordinateOffset[3] = {0,0,0};
 uint8_t Printer::flag0 = 0;
+uint8_t Printer::flag1 = 0;
 uint8_t Printer::debugLevel = 6; ///< Bitfield defining debug output. 1 = echo, 2 = info, 4 = error, 8 = dry run., 16 = Only communication, 32 = No moves
 uint8_t Printer::stepsPerTimerCall = 1;
 uint8_t Printer::menuMode = 0;
@@ -377,10 +378,10 @@ void Printer::updateCurrentPosition()
 uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
 {
     register long p;
-    if(!PrintLine::hasLines())
+    /*if(!PrintLine::hasLines()) // only print for the first line
     {
         UI_STATUS(UI_TEXT_PRINTING);
-    }
+    }*/
     float x,y,z;
     if(!relativeCoordinateMode)
     {
@@ -435,10 +436,15 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
     if(com->hasE() && !Printer::debugDryrun())
     {
         p = convertToMM(com->E * axisStepsPerMM[E_AXIS]);
-        if(relativeCoordinateMode || relativeExtruderCoordinateMode)
+        if(relativeCoordinateMode || relativeExtruderCoordinateMode) {
+            if(fabs(com->E)>EXTRUDE_MAXLENGTH)
+                p = 0;
             destinationSteps[E_AXIS] = currentPositionSteps[E_AXIS] + p;
-        else
+        } else {
+            if(fabs(p - currentPositionSteps[E_AXIS])>EXTRUDE_MAXLENGTH * axisStepsPerMM[E_AXIS])
+                currentPositionSteps[E_AXIS] = p;
             destinationSteps[E_AXIS] = p;
+        }
     }
     else Printer::destinationSteps[E_AXIS] = Printer::currentPositionSteps[E_AXIS];
     if(com->hasF())
@@ -453,9 +459,12 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
 
 void Printer::setup()
 {
+    HAL::stopWatchdog();
+#if FEATURE_CONTROLLER==5
+    HAL::delayMilliseconds(100);
+#endif // FEATURE_CONTROLLER
     //HAL::delayMilliseconds(500);  // add a delay at startup to give hardware time for initalization
     HAL::hwSetup();
-    HAL::stopWatchdog();
 #ifdef ANALYZER
 // Channel->pin assignments
 #if ANALYZER_CH0>=0
@@ -668,7 +677,9 @@ void Printer::setup()
     SET_OUTPUT(EXT5_EXTRUDER_COOLER_PIN);
     WRITE(EXT5_EXTRUDER_COOLER_PIN,LOW);
 #endif
-
+#if CASE_LIGHTS_PIN>=0
+    SET_OUTPUT(CASE_LIGHTS_PIN);
+#endif // CASE_LIGHTS_PIN
 #ifdef XY_GANTRY
     Printer::motorX = 0;
     Printer::motorY = 0;
@@ -768,6 +779,30 @@ void Printer::defaultLoopActions()
 
 }
 
+#if FEATURE_MEMORY_POSITION
+void Printer::MemoryPosition()
+{
+    memoryX = currentPositionSteps[0];
+    memoryY = currentPositionSteps[1];
+    memoryZ = currentPositionSteps[2];
+    memoryE = currentPositionSteps[3];
+
+}
+
+void Printer::GoToMemoryPosition(bool x,bool y,bool z,bool e,float feed)
+{
+    bool all = !(x || y || z);
+    float oldFeedrate = feedrate;
+    PrintLine::moveRelativeDistanceInSteps((all || x ? memoryX-currentPositionSteps[X_AXIS] : 0)
+                                           ,(all || y ? memoryY-currentPositionSteps[Y_AXIS] : 0)
+                                           ,(all || z ? memoryZ-currentPositionSteps[Z_AXIS] : 0)
+                                           ,(e ? memoryE-currentPositionSteps[Z_AXIS]:0),
+                                                   feed,false,ALWAYS_CHECK_ENDSTOPS);
+    feedrate = oldFeedrate;
+}
+#endif
+
+
 #if DRIVE_SYSTEM==3
 void Printer::deltaMoveToTopEndstops(float feedrate)
 {
@@ -833,6 +868,8 @@ void Printer::homeZAxis() // Delta z homing
 
 void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // Delta homing code
 {
+    long steps;
+    setHomed(true);
     bool homeallaxis = (xaxis && yaxis && zaxis) || (!xaxis && !yaxis && !zaxis);
     if (X_MAX_PIN > -1 && Y_MAX_PIN > -1 && Z_MAX_PIN > -1 && MAX_HARDWARE_ENDSTOP_X & MAX_HARDWARE_ENDSTOP_Y && MAX_HARDWARE_ENDSTOP_Z)
     {
@@ -1002,6 +1039,7 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
 {
     float startX,startY,startZ;
     realPosition(startX,startY,startZ);
+    setHomed(true);
 #if !defined(HOMING_ORDER)
 #define HOMING_ORDER HOME_ORDER_XYZ
 #endif
@@ -1110,6 +1148,8 @@ float Printer::runZProbe(bool first,bool last)
     Commands::waitUntilEndOfAllMoves();
     long probeDepth = 2*(Printer::zMaxSteps-Printer::zMinSteps);
     stepsRemainingAtZHit = -1;
+    long offx = axisStepsPerMM[0]*EEPROM::zProbeXOffset();
+    long offy = axisStepsPerMM[1]*EEPROM::zProbeYOffset();
     //PrintLine::moveRelativeDistanceInSteps(-offx,-offy,0,0,EEPROM::zProbeXYSpeed(),true,true);
     waitForZProbeStart();
     setZProbingActive(true);

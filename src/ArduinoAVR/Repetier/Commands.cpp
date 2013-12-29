@@ -61,14 +61,14 @@ void Commands::commandLoop()
 
 void Commands::checkForPeriodicalActions()
 {
-    if(!execute_periodical) return;
-    execute_periodical=0;
+    if(!executePeriodical) return;
+    executePeriodical=0;
     Extruder::manageTemperatures();
-    if(--counter_250ms==0)
+    if(--counter250ms==0)
     {
-        if(manage_monitor<=1+NUM_EXTRUDER)
-            write_monitor();
-        counter_250ms=5;
+        if(manageMonitor<=1+NUM_EXTRUDER)
+            writeMonitor();
+        counter250ms=5;
     }
     UI_SLOW;
 }
@@ -117,6 +117,7 @@ void Commands::printTemperatures(bool showRaw)
         Com::printF(Com::tColon,(1023<<(2-ANALOG_REDUCE_BITS))-heatedBedController.currentTemperature);
     }
 #endif
+    Com::printF(Com::tSpaceBAtColon,(pwm_pos[heatedBedController.pwmIndex])); // Show output of autotune when tuning!
 #endif
 #ifdef TEMP_PID
     Com::printF(Com::tSpaceAtColon,(autotuneIndex==255?pwm_pos[Extruder::current->id]:pwm_pos[autotuneIndex])); // Show output of autotune when tuning!
@@ -748,7 +749,10 @@ void Commands::executeGCode(GCode *com)
             break;
         case 23: //M23 - Select file
             if(com->hasString())
+            {
+                sd.fat.chdir();
                 sd.selectFile(com->text);
+            }
             break;
         case 24: //M24 - Start SD print
             sd.startPrint();
@@ -773,11 +777,17 @@ void Commands::executeGCode(GCode *com)
             break;
         case 30: // M30 filename - Delete file
             if(com->hasString())
+            {
+                sd.fat.chdir();
                 sd.deleteFile(com->text);
+            }
             break;
         case 32: // M32 directoryname
             if(com->hasString())
+            {
+                sd.fat.chdir();
                 sd.makeDirectory(com->text);
+            }
             break;
 #endif
         case 42: //M42 -Change pin status via gcode
@@ -816,9 +826,9 @@ void Commands::executeGCode(GCode *com)
             if (com->hasS())
             {
                 if(com->hasT())
-                    Extruder::setTemperatureForExtruder(com->S,com->T);
+                    Extruder::setTemperatureForExtruder(com->S,com->T,com->hasF() && com->F>0);
                 else
-                    Extruder::setTemperatureForExtruder(com->S,Extruder::current->id);
+                    Extruder::setTemperatureForExtruder(com->S,Extruder::current->id,com->hasF() && com->F>0);
             }
 #endif
             break;
@@ -826,7 +836,7 @@ void Commands::executeGCode(GCode *com)
             if(reportTempsensorError()) break;
             previousMillisCmd = HAL::timeInMilliseconds();
             if(Printer::debugDryrun()) break;
-            if (com->hasS()) Extruder::setHeatedBedTemperature(com->S);
+            if (com->hasS()) Extruder::setHeatedBedTemperature(com->S,com->hasF() && com->F>0);
             break;
         case 105: // M105  get temperature. Always returns the current temperature, doesn't wait until move stopped
             printTemperatures(com->hasX());
@@ -841,7 +851,7 @@ void Commands::executeGCode(GCode *com)
             Commands::waitUntilEndOfAllMoves();
             Extruder *actExtruder = Extruder::current;
             if(com->hasT() && com->T<NUM_EXTRUDER) actExtruder = &extruder[com->T];
-            if (com->hasS()) Extruder::setTemperatureForExtruder(com->S,actExtruder->id);
+            if (com->hasS()) Extruder::setTemperatureForExtruder(com->S,actExtruder->id,com->hasF() && com->F>0);
 #if defined(SKIP_M109_IF_WITHIN) && SKIP_M109_IF_WITHIN>0
             if(abs(actExtruder->tempControl.currentTemperatureC - actExtruder->tempControl.targetTemperatureC)<(SKIP_M109_IF_WITHIN)) break; // Already in range
 #endif
@@ -896,7 +906,7 @@ void Commands::executeGCode(GCode *com)
             UI_STATUS_UPD(UI_TEXT_HEATING_BED);
             Commands::waitUntilEndOfAllMoves();
 #if HAVE_HEATED_BED
-            if (com->hasS()) Extruder::setHeatedBedTemperature(com->S);
+            if (com->hasS()) Extruder::setHeatedBedTemperature(com->S,com->hasF() && com->F>0);
 #if defined(SKIP_M190_IF_WITHIN) && SKIP_M190_IF_WITHIN>0
             if(abs(heatedBedController.currentTemperatureC-heatedBedController.targetTemperatureC)<SKIP_M190_IF_WITHIN) break;
 #endif
@@ -914,6 +924,27 @@ void Commands::executeGCode(GCode *com)
 #endif
             UI_CLEAR_STATUS;
             previousMillisCmd = HAL::timeInMilliseconds();
+            break;
+        case 116: // Wait for temperatures to reach target temperature
+            if(Printer::debugDryrun()) break;
+            {
+                bool allReached = false;
+                codenum = HAL::timeInMilliseconds();
+                while(!allReached) {
+                    allReached = true;
+                    if( (HAL::timeInMilliseconds()-codenum) > 1000 )   //Print Temp Reading every 1 second while heating up.
+                    {
+                        printTemperatures();
+                        codenum = HAL::timeInMilliseconds();
+                    }
+                    Commands::checkForPeriodicalActions();
+                    for(uint8_t h=0;h<NUM_TEMPERATURE_LOOPS;h++) {
+                        TemperatureController *act = tempController[h];
+                        if(act->targetTemperatureC>30 && fabs(act->targetTemperatureC-act->currentTemperatureC)>1)
+                            allReached = false;
+                    }
+                }
+            }
             break;
 #if FEATURE_DITTO_PRINTING
         case 280:
@@ -1085,9 +1116,9 @@ void Commands::executeGCode(GCode *com)
         case 203: // M203 Temperature monitor
             if(com->hasS())
             {
-                if(com->S<NUM_EXTRUDER) manage_monitor = com->S;
+                if(com->S<NUM_EXTRUDER) manageMonitor = com->S;
 #if HAVE_HEATED_BED
-                else manage_monitor=NUM_EXTRUDER; // Set 100 to heated bed
+                else manageMonitor=NUM_EXTRUDER; // Set 100 to heated bed
 #endif
             }
             break;
@@ -1181,19 +1212,11 @@ void Commands::executeGCode(GCode *com)
             break;
 #if FEATURE_MEMORY_POSITION
         case 401: // Memory position
-            Printer::memoryX = Printer::currentPositionSteps[0];
-            Printer::memoryY = Printer::currentPositionSteps[1];
-            Printer::memoryZ = Printer::currentPositionSteps[2];
+            Printer::MemoryPosition();
             break;
         case 402: // Go to stored position
-        {
-            bool all = !(com->hasX() && com->hasY() && com->hasZ());
-            PrintLine::moveRelativeDistanceInSteps((all || com->hasX() ? Printer::memoryX-Printer::currentPositionSteps[0] : 0)
-                                                   ,(all || com->hasY() ? Printer::memoryY-Printer::currentPositionSteps[1] : 0)
-                                                   ,(all || com->hasZ() ? Printer::memoryZ-Printer::currentPositionSteps[2] : 0)
-                                                   ,0,(com->hasF() ? com->F : Printer::feedrate),false,ALWAYS_CHECK_ENDSTOPS);
-        }
-        break;
+            Printer::GoToMemoryPosition(com->hasX(),com->hasY(),com->hasZ(),com->hasE(),(com->hasF() ? com->F : Printer::feedrate));
+            break;
 #endif
         case 908: // Control digital trimpot directly.
         {
@@ -1284,7 +1307,7 @@ void Commands::executeGCode(GCode *com)
                 HAL::servoMicroseconds(com->P,s);
             }
 #endif // FEATURE_SERVO
-#if Z_HOME_DIR<0
+#if Z_HOME_DIR>0 && MAX_HARDWARE_ENDSTOP_Z
         case 251:
             Printer::zLength -= Printer::currentPosition[Z_AXIS];
             Printer::currentPositionSteps[Z_AXIS] = 0;
@@ -1328,6 +1351,7 @@ void Commands::emergencyStop()
     Extruder::manageTemperatures();
     for(uint8_t i=0; i<NUM_EXTRUDER+3; i++)
         pwm_pos[i] = 0;
+    pwm_pos[0] = pwm_pos[NUM_EXTRUDER] = pwm_pos[NUM_EXTRUDER+1] = pwm_pos[NUM_EXTRUDER+2]=0;
 #if EXT0_HEATER_PIN>-1
     WRITE(EXT0_HEATER_PIN,0);
 #endif
@@ -1337,8 +1361,20 @@ void Commands::emergencyStop()
 #if defined(EXT2_HEATER_PIN) && EXT2_HEATER_PIN>-1 && NUM_EXTRUDER>2
     WRITE(EXT2_HEATER_PIN,0);
 #endif
+#if defined(EXT3_HEATER_PIN) && EXT3_HEATER_PIN>-1 && NUM_EXTRUDER>3
+    WRITE(EXT3_HEATER_PIN,0);
+#endif
+#if defined(EXT4_HEATER_PIN) && EXT4_HEATER_PIN>-1 && NUM_EXTRUDER>4
+    WRITE(EXT4_HEATER_PIN,0);
+#endif
+#if defined(EXT5_HEATER_PIN) && EXT5_HEATER_PIN>-1 && NUM_EXTRUDER>5
+    WRITE(EXT5_HEATER_PIN,0);
+#endif
 #if FAN_PIN>-1
     WRITE(FAN_PIN,0);
+#endif
+#if HEATED_BED_HEATER_PIN>-1
+    WRITE(HEATED_BED_HEATER_PIN,0);
 #endif
     while(1) {}
     END_INTERRUPT_PROTECTED

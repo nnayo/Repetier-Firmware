@@ -63,6 +63,23 @@
 #endif
 
 
+#if UI_DISPLAY_CHARSET==3 // U8glib
+#define CHAR_RIGHT 187 //>>
+#define CHAR_SELECTOR 255 //'>'
+#define CHAR_SELECTED 254 //'*'
+#define STR_auml "\344"
+#define STR_Auml "\304"
+#define STR_uuml "\374"
+#define STR_Uuml "\334"
+#define STR_ouml "\366"
+#define STR_Ouml "\326"
+#define STR_szlig "\337"
+#endif
+#define TEST176 "176\260\261\262\263\264\265\266\267\270\271\272\273\274\275\276\277"
+#define TEST192 "192\300\301\302\303\304\305\306\307\310\311\312\313\314\315\316\317"
+#define TEST208 "208\320\321\322\323\324\325\326\327\330\331\332\333\334\335\336\337"
+#define TEST224 "224\340\341\342\343\344\345\346\347\350\351\352\353\354\355\356\357"
+
 
 // At first all terms in english are defined. After that the selected language
 // can overwrite the definition. That way new strings are at least in english
@@ -94,6 +111,7 @@
 #define UI_TEXT_HOME_Z           "Home Z"
 #define UI_TEXT_PREHEAT_PLA      "Preheat PLA"
 #define UI_TEXT_PREHEAT_ABS      "Preheat ABS"
+#define UI_TEXT_LIGHTS_ONOFF     "Lights :%lo"
 #define UI_TEXT_COOLDOWN         "Cooldown"
 #define UI_TEXT_SET_TO_ORIGIN    "Set to Origin"
 #define UI_TEXT_DISABLE_STEPPER  "Disable stepper"
@@ -238,6 +256,7 @@
 #define UI_TEXT_POWER            "ATX power on/off"
 #define UI_TEXT_STRING_HM_DEADTIME     "Dead Time"
 #define UI_TEXT_STRING_HM_SLOWBANG     "SlowBang"
+#define UI_TEXT_STOP_PRINT "Stop Print"
 
 // *************** German translation ****************
 
@@ -266,6 +285,7 @@
 #define UI_TEXT_HOME_Z           "Home Z"
 #define UI_TEXT_PREHEAT_PLA      "Vorheizen PLA"
 #define UI_TEXT_PREHEAT_ABS      "Vorheizen ABS"
+#define UI_TEXT_LIGHTS_ONOFF     "Lampen: %lo"
 #define UI_TEXT_COOLDOWN         "Abk" STR_uuml "hlen"
 #define UI_TEXT_SET_TO_ORIGIN    "Setze Nullpunkt"
 #define UI_TEXT_DISABLE_STEPPER  "Motoren Aussch."
@@ -400,7 +420,7 @@
 #define UI_TEXT_EXTR_WAIT_RETRACT_UNITS "Wait Units:%XUmm"
 #define UI_TEXT_SD_REMOVED       "Karte entfernt"
 #define UI_TEXT_SD_INSERTED      "Karte eingelegt"
-#define UI_TEXT_PRINTER_READY    "Drucker bereit."
+#define UI_TEXT_PRINTER_READY    "\007 %PN bereit."
 // Printtime output gets aggregated like <Days_5gisgits>UI_TEXT_PRINTTIME_DAYS<Hours>UI_TEXT_PRINTTIME_HOURS<Minutes>UI_TEXT_PRINTTIME_MINUTES
 // ___88 days 12:45
 #define UI_TEXT_PRINTTIME_DAYS   " Tage "
@@ -411,6 +431,7 @@
 #define UI_TEXT_POWER            "ATX Netzteil an/aus"
 #define UI_TEXT_STRING_HM_DEADTIME     "Totzeit"
 #define UI_TEXT_STRING_HM_SLOWBANG     "Langs.BB"
+#define UI_TEXT_STOP_PRINT "Druck abbrechen"
 
 #endif
 
@@ -1332,6 +1353,7 @@
 #define UI_TEXT_POWER            "ATX power on/off"
 #define UI_TEXT_STRING_HM_DEADTIME     "Dead Time"
 #define UI_TEXT_STRING_HM_SLOWBANG     "SlowBang"
+#define UI_TEXT_STOP_PRINT "Stop Print"
 
 #endif
 
