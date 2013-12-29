@@ -1,7 +1,7 @@
 ARDUINO_DIR   = /usr/share/arduino
 #ARDMK_DIR     = /usr/share/arduino
-ARDMK_DIR     = ~/TRoll/projects/arduino_makefile/arduino-mk
-ARDMK_PATH    = ~/TRoll/projects/arduino_makefile/bin
+ARDMK_DIR     = ~/TRoll/projets/arduino_makefile/arduino-mk
+ARDMK_PATH    = ~/TRoll/projets/arduino_makefile/bin
 AVR_TOOLS_DIR = /usr
 
 
@@ -11,7 +11,9 @@ MONITOR_PORT = /dev/ttyUSB0
 MONITOR_BAUDRATE = 115200
 ARDUINO_LIBS = 
 
-CPPFLAGS += -Wextra
+CPPFLAGS += -Wextra -g
 #CPPFLAGS += -Wextra -Werror
+
+LDFLAGS += -Wl,--undefined=_mmcu,--section-start=.mmcu=0x800000
 
 include $(ARDMK_DIR)/Arduino.mk
