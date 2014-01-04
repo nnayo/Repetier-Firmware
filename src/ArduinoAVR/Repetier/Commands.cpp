@@ -20,6 +20,9 @@
 */
 
 #include "Repetier.h"
+#if HAVE_HEATED_BED
+#include "Extruder.h"
+#endif
 
 const int sensitive_pins[] PROGMEM = SENSITIVE_PINS; // Sensitive pin list for M42
 int Commands::lowestRAMValue=MAX_RAM;
@@ -116,8 +119,8 @@ void Commands::printTemperatures(bool showRaw)
         Com::printF(Com::tSpaceRaw,(int)NUM_EXTRUDER);
         Com::printF(Com::tColon,(1023<<(2-ANALOG_REDUCE_BITS))-heatedBedController.currentTemperature);
     }
-#endif
     Com::printF(Com::tSpaceBAtColon,(pwm_pos[heatedBedController.pwmIndex])); // Show output of autotune when tuning!
+#endif
 #endif
 #ifdef TEMP_PID
     Com::printF(Com::tSpaceAtColon,(autotuneIndex==255?pwm_pos[Extruder::current->id]:pwm_pos[autotuneIndex])); // Show output of autotune when tuning!
